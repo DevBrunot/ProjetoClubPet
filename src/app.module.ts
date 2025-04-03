@@ -9,6 +9,7 @@ import { Caretaker } from './entities/caretaker.entity';
 import { PetOwnersModule } from './modules/pet-owners/pet-owners.module';
 import { PetsModule } from './modules/pets/pets.module';
 import { CaretakersModule } from './modules/caretakers/caretakers.module';
+import { PaymentModule } from './modules/payments/payment.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { CaretakersModule } from './modules/caretakers/caretakers.module';
     PetOwnersModule,
     PetsModule,
     CaretakersModule,
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

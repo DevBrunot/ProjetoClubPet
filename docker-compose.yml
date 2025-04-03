@@ -9,18 +9,21 @@ services:
       MYSQL_DATABASE: clubpet_db
       MYSQL_USER: clubpet_user
       MYSQL_PASSWORD: clubpet_password
+      STRIPE_SECRET_KEY: sk_test_51R7fA54F0H3WjP8dx0RKchm89TKT4Yi4MvVg0FRiA1lW2Va5uYdj77EBVZGb3egwQb7eFYlLU9pSfNvO8cXsPLwT00aU1c6arr
+      STRIPE_WEBHOOK_SECRET: whsec_xxxxxxxxxxxxxxx
     ports:
-      - "3306:3306"
+      - '3306:3306'
     volumes:
       - mariadb_data:/var/lib/mysql
     networks:
       - clubpet_network
-    command: 
+    command:
       - '--character-set-server=utf8mb4'
       - '--collation-server=utf8mb4_unicode_ci'
       - '--default-authentication-plugin=mysql_native_password'
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      test:
+        ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-u', 'root', '-proot']
       interval: 5s
       timeout: 5s
       retries: 10
@@ -31,4 +34,4 @@ networks:
 
 volumes:
   mariadb_data:
-    driver: local 
+    driver: local
