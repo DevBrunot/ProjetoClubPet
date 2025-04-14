@@ -118,17 +118,20 @@ Sistema de gerenciamento para pets, seus donos e cuidadores.
 ## 🔧 Instalação
 
 1. Clone o repositório
+
 ```bash
 git clone [url-do-repositorio]
 cd clubpet
 ```
 
 2. Instale as dependências
+
 ```bash
 npm install
 ```
 
 3. Configure o arquivo .env
+
 ```env
 # Já configurado com valores padrão para desenvolvimento
 DB_HOST=localhost
@@ -139,14 +142,18 @@ DB_DATABASE=clubpet_db
 API_VERSION=1.0.0
 PORT=3000
 NODE_ENV=development
+STRIPE_SECRET_KEY=sk_test_51R7fA54F0H3WjP8dx0RKchm89TKT4Yi4MvVg0FRiA1lW2Va5uYdj77EBVZGb3egwQb7eFYlLU9pSfNvO8cXsPLwT00aU1c6arr
+STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxx
 ```
 
 4. Inicie o banco de dados com Docker
+
 ```bash
 docker-compose up -d
 ```
 
 5. Inicie a aplicação
+
 ```bash
 npm run start:dev
 ```
@@ -156,15 +163,18 @@ npm run start:dev
 O sistema possui três entidades principais:
 
 ### 1. Donos de Pet (PetOwner)
+
 - Gerencia informações dos proprietários dos pets
 - Dados: nome, email, senha, telefone, endereço
 
 ### 2. Pets
+
 - Cadastro e gerenciamento de pets
 - Dados: nome, espécie, raça, idade, peso, histórico médico
 - Relacionamentos: dono do pet e cuidador
 
 ### 3. Cuidadores/Tratadores (Caretaker)
+
 - Profissionais que cuidam dos pets
 - Dados: nome, email, senha, telefone, especialização, certificações
 - Status de disponibilidade
@@ -174,8 +184,10 @@ O sistema possui três entidades principais:
 ### Donos de Pet (PetOwner)
 
 #### 1. Criar Dono de Pet
+
 - **POST** `http://localhost:3000/pet-owners`
 - **Body:**
+
 ```json
 {
   "name": "João Silva",
@@ -187,16 +199,20 @@ O sistema possui três entidades principais:
 ```
 
 #### 2. Listar Todos os Donos
+
 - **GET** `http://localhost:3000/pet-owners`
 - Não requer body
 
 #### 3. Buscar Dono por ID
+
 - **GET** `http://localhost:3000/pet-owners/1`
 - Não requer body
 
 #### 4. Atualizar Dono
+
 - **PUT** `http://localhost:3000/pet-owners/1`
 - **Body:**
+
 ```json
 {
   "name": "João Silva Atualizado",
@@ -207,14 +223,17 @@ O sistema possui três entidades principais:
 ```
 
 #### 5. Deletar Dono
+
 - **DELETE** `http://localhost:3000/pet-owners/1`
 - Não requer body
 
 ### Pets
 
 #### 1. Criar Pet
+
 - **POST** `http://localhost:3000/pets`
 - **Body:**
+
 ```json
 {
   "name": "Rex",
@@ -229,24 +248,30 @@ O sistema possui três entidades principais:
 ```
 
 #### 2. Listar Todos os Pets
+
 - **GET** `http://localhost:3000/pets`
 - Não requer body
 
 #### 3. Buscar Pet por ID
+
 - **GET** `http://localhost:3000/pets/1`
 - Não requer body
 
 #### 4. Buscar Pets por Dono
+
 - **GET** `http://localhost:3000/pets/owner/1`
 - Não requer body
 
 #### 5. Buscar Pets por Cuidador
+
 - **GET** `http://localhost:3000/pets/caretaker/1`
 - Não requer body
 
 #### 6. Atualizar Pet
+
 - **PUT** `http://localhost:3000/pets/1`
 - **Body:**
+
 ```json
 {
   "name": "Rex",
@@ -256,14 +281,17 @@ O sistema possui três entidades principais:
 ```
 
 #### 7. Deletar Pet
+
 - **DELETE** `http://localhost:3000/pets/1`
 - Não requer body
 
 ### Cuidadores (Caretaker)
 
 #### 1. Criar Cuidador
+
 - **POST** `http://localhost:3000/caretakers`
 - **Body:**
+
 ```json
 {
   "name": "Maria Silva",
@@ -277,20 +305,25 @@ O sistema possui três entidades principais:
 ```
 
 #### 2. Listar Todos os Cuidadores
+
 - **GET** `http://localhost:3000/caretakers`
 - Não requer body
 
 #### 3. Listar Cuidadores Disponíveis
+
 - **GET** `http://localhost:3000/caretakers/available`
 - Não requer body
 
 #### 4. Buscar Cuidador por ID
+
 - **GET** `http://localhost:3000/caretakers/1`
 - Não requer body
 
 #### 5. Atualizar Cuidador
+
 - **PUT** `http://localhost:3000/caretakers/1`
 - **Body:**
+
 ```json
 {
   "name": "Maria Silva",
@@ -300,8 +333,10 @@ O sistema possui três entidades principais:
 ```
 
 #### 6. Atualizar Disponibilidade
+
 - **PUT** `http://localhost:3000/caretakers/1/availability`
 - **Body:**
+
 ```json
 {
   "isAvailable": false
@@ -309,12 +344,14 @@ O sistema possui três entidades principais:
 ```
 
 #### 7. Deletar Cuidador
+
 - **DELETE** `http://localhost:3000/caretakers/1`
 - Não requer body
 
 ### Informações da API
 
 #### Versão da API
+
 - **GET** `http://localhost:3000/version`
 - Retorna a versão atual da API configurada no .env
 
@@ -357,3 +394,122 @@ O sistema possui três entidades principais:
 - O sistema está em desenvolvimento
 - A sincronização automática do banco de dados está ativada em ambiente de desenvolvimento
 - Logs e tratamento de erros serão melhorados nas próximas versões
+
+---
+
+## 💳 Integração de Pagamentos com Stripe
+
+### 🚀 Configuração do Stripe
+
+Antes de rodar a aplicação com pagamentos, é necessário configurar as credenciais do Stripe.
+
+1️⃣ **Adicione as credenciais no arquivo `.env`**
+
+```env
+STRIPE_SECRET_KEY=sk_test_xxxxxxxxxxxxxxxxx
+STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxx
+FRONTEND_URL=http://localhost:3000
+```
+
+2️⃣ **Instale as dependências do Stripe na aplicação**
+
+Caso ainda não tenha instalado, execute:
+
+```sh
+npm install stripe
+```
+
+---
+
+### ✅ Criando uma Sessão de Pagamento
+
+Para iniciar um pagamento, faça uma requisição **POST** para o seguinte endpoint:
+
+- **Endpoint:** `POST /payments/checkout`
+- **Body (JSON):**
+
+```json
+{
+  "userId": 1,
+  "caretakerId": 2,
+  "amount": 50
+}
+```
+
+- **Resposta esperada:**
+
+```json
+{
+  "sessionId": "cs_test_xxxxxxxxxxxxxx"
+}
+```
+
+Acesse `https://checkout.stripe.com/pay/cs_test_xxxxxxxxxxxxxx` para realizar o pagamento.
+
+---
+
+## 🔄 Configurando Webhooks do Stripe
+
+Os webhooks são usados para atualizar automaticamente o status dos pagamentos.
+
+### 🎯 **1. Instalar o Stripe CLI**
+
+Baixe e instale o Stripe CLI:
+
+- **Windows:** [Baixar aqui](https://stripe.com/docs/stripe-cli)
+  ```
+
+  ```
+
+### 🎯 **2. Autenticar no Stripe CLI**
+
+```sh
+stripe login
+```
+
+### 🎯 **3. Iniciar o Webhook do Stripe**
+
+Para encaminhar os eventos para sua API, execute:
+
+```sh
+stripe listen --forward-to localhost:3000/payments/webhook
+```
+
+Após iniciar a escuta, uma chave webhook, do tipo whsec_xxxxxxxxxxxxxxx será gerada, copie-a e cole no arquivo .env
+
+### 🎯 **4. Testar Webhooks**
+
+Após iniciar a escuta, dispare um evento de teste:
+
+```sh
+stripe trigger checkout.session.completed
+```
+
+Se tudo estiver correto, a API receberá o evento e atualizará o banco de dados.
+
+---
+
+## 📊 Consultando Pagamentos
+
+- **Endpoint:** `GET /payments`
+- **Resposta esperada:**
+
+```json
+[
+  {
+    "id": 1,
+    "user": { "id": 1 },
+    "caretaker": { "id": 2 },
+    "amount": 50,
+    "currency": "usd",
+    "status": "completed",
+    "createdAt": "2024-03-28T14:00:00.000Z"
+  }
+]
+```
+
+---
+
+## 📢 **Conclusão**
+
+Agora sua aplicação está integrada com o **Stripe** e suporta pagamentos com **Checkout hospedado** e **Webhooks automáticos**. 🚀
