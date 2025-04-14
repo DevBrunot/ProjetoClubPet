@@ -142,7 +142,7 @@ DB_DATABASE=clubpet_db
 API_VERSION=1.0.0
 PORT=3000
 NODE_ENV=development
-STRIPE_SECRET_KEY=sk_test_51R7fA54F0H3WjP8dx0RKchm89TKT4Yi4MvVg0FRiA1lW2Va5uYdj77EBVZGb3egwQb7eFYlLU9pSfNvO8cXsPLwT00aU1c6arr
+STRIPE_SECRET_KEY=xxxxxxxxxxxxx
 STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxx
 ```
 
@@ -457,6 +457,7 @@ Os webhooks são usados para atualizar automaticamente o status dos pagamentos.
 Baixe e instale o Stripe CLI:
 
 - **Windows:** [Baixar aqui](https://stripe.com/docs/stripe-cli)
+
   ```
 
   ```
