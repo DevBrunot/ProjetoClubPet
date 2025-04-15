@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Mapa Profissional - Treinadores em Movimento (Águas Claras, DF)</title>
+    <style>
+      /* MAPA */
+      #map {
+        width: 100%;
+        height: 100vh;
+      }
+
+      /* POPUP (InfoWindow) - Estilo de Card Profissional */
+      .popup-card {
+        font-family: "Roboto", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        overflow: hidden;
+        max-width: 280px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Cabeçalho do Card */
+      .popup-card-header {
+        background-color: #f5f5f5;
+        padding: 12px 16px;
+        border-bottom: 1px solid #e0e0e0;
+      }
+      .popup-card-header h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      /* Corpo do Card */
+      .popup-card-body {
+        padding: 12px 16px;
+      }
+      .popup-row {
+        margin: 6px 0;
+        color: #555;
+        line-height: 1.4;
+      }
+      .popup-row strong {
+        color: #444;
+      }
+
+      /* Rodapé do Card */
+      .popup-card-footer {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        padding: 12px 16px;
+        border-top: 1px solid #e0e0e0;
+        gap: 6px;
+      }
+
+      /* Botões */
+      .popup-btn {
+        border: none;
+        border-radius: 4px;
+        padding: 8px 14px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background-color 0.2s, transform 0.2s;
+      }
+      /* Botão principal: Acessar Perfil */
+      .popup-btn-main {
+        background-color: #FF5722;
+        color: #fff;
+        font-weight: 600;
+      }
+      .popup-btn-main:hover {
+        background-color: #E64A19;
+        transform: scale(1.03);
+      }
+      /* Botão secundário: Traçar Rota / Limpar Rota */
+      .popup-btn-secondary {
+        background-color: #4285F4;
+        color: #fff;
+      }
+      .popup-btn-secondary:hover {
+        background-color: #3367D6;
+      }
+    </style>
+    <script>
+      let map;
+      // Centro do mapa: Águas Claras, DF
+      let userPos = { lat: -15.8350, lng: -48.0280 };
+      
+      let trainerMarkers = [];
+      let directionsService;
+      let directionsRenderer;
+
+      /* Lista de nomes dos treinadores */
+      const trainerNames = [
+        'João', 'José', 'Pedro', 'Augusto', 'Carlos', 'Luiz', 'Marcos', 'Rafael',
+        'Felipe', 'Mateus', 'Eduardo', 'Fernando', 'Ricardo', 'Leonardo', 'Guilherme',
+        'Rodrigo', 'Bruno', 'Victor', 'André', 'Diego', 'Antonio', 'Fábio', 'Samuel',
+        'Daniel', 'Igor', 'Alexandre', 'Renato', 'Claudio', 'Hugo', 'Paulo'
+      ];
+
+      /* Gera uma lista de treinadores */
+      let trainers = trainerNames.map((name, index) => {
+        return {
+          id: 't' + (index + 1),
+          name: 'Treinador ' + name,
+          // Posição inicial dentro de ±0.01 grau (~1.1 km)
+          latitude: userPos.lat + (Math.random() - 0.5) * 0.02,
+          longitude: userPos.lng + (Math.random() - 0.5) * 0.02
+        };
+      });
+
+      // Ícone customizado (Flaticon)
+      const trainerIconUrl = "https://cdn-icons-png.flaticon.com/512/1999/1999625.png";
+
+      // Inicializa o mapa
+      function initMap() {
+        map = new google.maps.Map(document.getElementById("map"), {
+          zoom: 14,
+          center: userPos,
+        });
+
+        // Marcador do usuário
+        new google.maps.Marker({
+          position: userPos,
+          map,
+          title: "Você",
+        });
+
+        directionsService = new google.maps.DirectionsService();
+        directionsRenderer = new google.maps.DirectionsRenderer({ map: map });
+
+        // Inicia o movimento suave
+        initializeTrainerMovement();
+        setInterval(smoothUpdateTrainers, 200);
+      }
+
+      // Propriedades de movimento para cada treinador
+      function initializeTrainerMovement() {
+        trainers.forEach(trainer => {
+          trainer.initialLat = trainer.latitude;
+          trainer.initialLng = trainer.longitude;
+          trainer.destinationLat = trainer.latitude + (Math.random() - 0.5) * 0.01;
+          trainer.destinationLng = trainer.longitude + (Math.random() - 0.5) * 0.01;
+          trainer.startTime = Date.now();
+          trainer.duration = 30000; // 30 seg para movimento lento
+        });
+        updateTrainerMarkers(trainers);
+      }
+
+      // Cria ou atualiza os marcadores
+      function updateTrainerMarkers(trainersArray) {
+        if (trainerMarkers.length === 0) {
+          trainersArray.forEach(trainer => {
+            const marker = new google.maps.Marker({
+              position: { lat: trainer.latitude, lng: trainer.longitude },
+              map,
+              title: trainer.name,
+              icon: {
+                url: trainerIconUrl,
+                scaledSize: new google.maps.Size(40, 40),
+                origin: new google.maps.Point(0, 0),
+                anchor: new google.maps.Point(20, 40)
+              }
+            });
+            marker.addListener("click", () => showTrainerPopup(trainer, marker));
+            trainerMarkers.push({ id: trainer.id, marker });
+          });
+        } else {
+          trainersArray.forEach(trainer => {
+            const markerObj = trainerMarkers.find(m => m.id === trainer.id);
+            if (markerObj) {
+              markerObj.marker.setPosition({ lat: trainer.latitude, lng: trainer.longitude });
+            }
+          });
+        }
+      }
+
+      // Movimento suave via interpolação linear
+      function smoothUpdateTrainers() {
+        const now = Date.now();
+        trainers.forEach(trainer => {
+          const elapsed = now - trainer.startTime;
+          const progress = Math.min(elapsed / trainer.duration, 1);
+
+          trainer.latitude = trainer.initialLat + progress * (trainer.destinationLat - trainer.initialLat);
+          trainer.longitude = trainer.initialLng + progress * (trainer.destinationLng - trainer.initialLng);
+
+          if (progress >= 1) {
+            trainer.initialLat = trainer.destinationLat;
+            trainer.initialLng = trainer.destinationLng;
+            trainer.destinationLat = trainer.initialLat + (Math.random() - 0.5) * 0.01;
+            trainer.destinationLng = trainer.initialLng + (Math.random() - 0.5) * 0.01;
+            trainer.startTime = now;
+          }
+        });
+        updateTrainerMarkers(trainers);
+      }
+
+      // Exibe um card estilizado com dados do treinador e botões
+      function showTrainerPopup(trainer, marker) {
+        const toursRealizados = Math.floor(Math.random() * 50) + 50;
+        const nota = (Math.random() * 2 + 3).toFixed(1);
+        const content = `
+          <div class="popup-card">
+            <div class="popup-card-header">
+              <h3>${trainer.name}</h3>
+            </div>
+            <div class="popup-card-body">
+              <div class="popup-row"><strong>Localização:</strong> ${trainer.latitude.toFixed(5)}, ${trainer.longitude.toFixed(5)}</div>
+              <div class="popup-row"><strong>Passeios Realizados:</strong> ${toursRealizados}</div>
+              <div class="popup-row"><strong>Notas:</strong> ${nota} &#9733;</div>
+            </div>
+            <div class="popup-card-footer">
+              <button class="popup-btn-main" onclick="window.acessarPerfil('${trainer.id}')">Acessar Perfil</button>
+              <button class="popup-btn popup-btn-secondary" onclick="window.showRoute('${trainer.id}')">Traçar Rota</button>
+              <button class="popup-btn popup-btn-secondary" onclick="window.clearRoute()">Limpar Rota</button>
+            </div>
+          </div>
+        `;
+        const infowindow = new google.maps.InfoWindow({ content });
+        infowindow.open(map, marker);
+      }
+
+      // Botão principal: redireciona para o perfil do treinador
+      window.acessarPerfil = function(trainerId) {
+        window.location.href = `/perfil/treinador/${trainerId}`;
+      };
+
+      // Botão para traçar rota
+      window.showRoute = function(trainerId) {
+        const trainer = trainers.find(t => t.id === trainerId);
+        if (!trainer) {
+          alert("Treinador não encontrado.");
+          return;
+        }
+        const request = {
+          origin: userPos,
+          destination: { lat: trainer.latitude, lng: trainer.longitude },
+          travelMode: google.maps.TravelMode.DRIVING
+        };
+        directionsService.route(request, (result, status) => {
+          if (status === google.maps.DirectionsStatus.OK) {
+            directionsRenderer.setDirections(result);
+          } else {
+            alert("Não foi possível traçar a rota: " + status);
+          }
+        });
+      };
+
+      // Botão para limpar a rota
+      window.clearRoute = function() {
+        if (directionsRenderer) {
+          directionsRenderer.set('directions', null);
+        }
+      };
+    </script>
+  </head>
+  <body>
+    <div id="map"></div>
+    <!-- Script da API do Google Maps com a key injetada no back-end -->
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=<%= googleMapsApiKey %>&callback=initMap"></script>
+  </body>
+</html>
