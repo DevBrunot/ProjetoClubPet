@@ -5,34 +5,42 @@ import {
   ManyToOne,
   CreateDateColumn,
 } from 'typeorm';
+import { Pet } from './pet.entity';
+import { PetOwner } from './pet-owner.entity';
 import { Caretaker } from './caretaker.entity';
-import { User } from './user.entity';
 
 @Entity()
 export class Payment {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => User, (user) => user.payments, { nullable: false })
-  user: User;
-
-  @ManyToOne(() => Caretaker, (caretaker) => caretaker.payments, {
-    nullable: false,
-  })
-  caretaker: Caretaker;
-
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   amount: number;
 
-  @Column({ type: 'varchar', length: 50 })
+  @Column()
   currency: string;
 
-  @Column({ type: 'varchar', length: 255 })
-  stripePaymentIntentId: string; // ID do pagamento no Stripe
+  @Column({ nullable: true })
+  stripePaymentId: string;
 
-  @Column({ type: 'varchar', length: 50, default: 'pending' })
-  status: string; // pending, completed, failed, refunded
+  @Column({ default: 'pending' })
+  status: string;
+
+  @ManyToOne(() => Pet, { nullable: false })
+  pet: Pet;
+
+  @ManyToOne(() => PetOwner, { nullable: false })
+  owner: PetOwner;
+
+  @ManyToOne(() => Caretaker, { nullable: true })
+  caretaker: Caretaker;
+
+  @Column({ type: 'text', nullable: true })
+  description: string;
 
   @CreateDateColumn()
   createdAt: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  paidAt: Date;
 }

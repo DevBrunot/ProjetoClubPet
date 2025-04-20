@@ -1,46 +1,79 @@
-import { Controller, Post, Body, Req, Res, Headers } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  BadRequestException,
+  UseGuards,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PaymentService } from './payment.service';
-import { Request, Response } from 'express';
 import Stripe from 'stripe';
 
 @Controller('payments')
 export class PaymentController {
-  constructor(private readonly paymentService: PaymentService) {}
+  private stripe: Stripe;
 
-  @Post('checkout')
-  async createCheckoutSession(
-    @Body() body: { userId: number; caretakerId: number; amount: number },
+  constructor(
+    private paymentService: PaymentService,
+    private configService: ConfigService,
   ) {
-    return this.paymentService.createCheckoutSession(
-      body.userId,
-      body.caretakerId,
+    const stripeKey = this.configService.get<string>('STRIPE_SECRET_KEY');
+    if (!stripeKey) {
+      console.warn('Stripe Secret Key não definida! Pagamentos não funcionarão corretamente.');
+    }
+    this.stripe = new Stripe(stripeKey || 'dummy_key_for_dev');
+  }
+
+  @Post()
+  async createPayment(
+    @Body() body: { petId: number; ownerId: number; amount: number; description: string; caretakerId?: number },
+  ) {
+    return this.paymentService.createPayment(
+      body.petId,
+      body.ownerId,
       body.amount,
+      body.description,
+      body.caretakerId
     );
   }
 
+  @Get()
+  async findAll() {
+    return this.paymentService.findAll();
+  }
+
+  @Get(':id')
+  async findOne(@Param('id') id: number) {
+    return this.paymentService.findOne(id);
+  }
+
   @Post('webhook')
-  async handleWebhook(
-    @Req() req: Request,
-    @Res() res: Response,
-    @Headers('stripe-signature') signature: string,
-  ) {
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2023-10-16',
-    });
-
-    let event: Stripe.Event;
-
+  async webhook(@Body() payload: any, @Param('signature') signature: string) {
     try {
-      event = stripe.webhooks.constructEvent(
-        req.body,
-        signature,
-        process.env.STRIPE_WEBHOOK_SECRET,
-      );
-    } catch (err) {
-      return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
+      const stripeWebhookSecret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET');
+      if (!stripeWebhookSecret) {
+        throw new BadRequestException('Stripe Webhook Secret não configurado');
+      }
 
-    await this.paymentService.handleWebhook(event);
-    res.status(200).send('Success');
+      const event = this.stripe.webhooks.constructEvent(
+        JSON.stringify(payload),
+        signature,
+        stripeWebhookSecret,
+      );
+
+      if (event.type === 'payment_intent.succeeded') {
+        const paymentIntent = event.data.object as Stripe.PaymentIntent;
+        await this.paymentService.updatePaymentStatus(paymentIntent.id, 'completed');
+      } else if (event.type === 'payment_intent.payment_failed') {
+        const paymentIntent = event.data.object as Stripe.PaymentIntent;
+        await this.paymentService.updatePaymentStatus(paymentIntent.id, 'failed');
+      }
+
+      return { received: true };
+    } catch (err) {
+      throw new BadRequestException(`Webhook Error: ${err.message}`);
+    }
   }
 }
