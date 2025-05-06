@@ -25,6 +25,9 @@ export class PetOwner {
   @Column()
   address: string;
 
+  @Column({ default: false })
+  blocked: boolean;
+
   @OneToMany(() => Pet, (pet) => pet.owner)
   pets: Pet[];
 

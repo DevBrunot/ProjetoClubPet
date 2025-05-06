@@ -46,4 +46,9 @@ export class PetOwnersController {
       throw new HttpException('Erro ao remover dono de pet', HttpStatus.BAD_REQUEST);
     }
   }
+
+  @Post(':id/bloquear')
+  async bloquear(@Param('id') id: number) {
+    return this.petOwnersService.bloquearUsuario(id);
+  }
 } 

@@ -37,4 +37,13 @@ export class PetOwnersService {
       throw new NotFoundException(`Dono de pet com ID ${id} não encontrado`);
     }
   }
+
+  async bloquearUsuario(id: number): Promise<PetOwner> {
+    const usuario = await this.petOwnersRepository.findOneBy({ id });
+    if (!usuario) {
+      throw new Error('Usuário não encontrado');
+    }
+    usuario.blocked = true;
+    return this.petOwnersRepository.save(usuario);
+  }
 } 
