@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, HttpStatus, HttpException } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, HttpStatus, HttpException, Render } from '@nestjs/common';
 
 import { Caretaker } from '../../entities/caretaker.entity';
 import { CaretakersService } from './caretakers.service';
@@ -24,6 +24,14 @@ export class CaretakersController {
   @Get('available')
   async findAvailable(): Promise<Caretaker[]> {
     return await this.caretakersService.findAvailable();
+  }
+
+  @Get('perfil/:id')
+  @Render('caretaker-profile')
+  async renderProfile(@Param('id') id: number) {
+    const caretaker = await this.caretakersService.findOne(id);
+    if (caretaker) caretaker.password = '';
+    return { caretaker };
   }
 
   @Get(':id')

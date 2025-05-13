@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mapa de Treinadores</title>
+    <style>
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        .trainer-card {
+            padding: 10px;
+            max-width: 200px;
+        }
+        .trainer-card h3 {
+            margin: 0 0 10px 0;
+        }
+        .trainer-card p {
+            margin: 5px 0;
+        }
+        .trainer-card button {
+            margin: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        /* Animação de pulsar */
+        .pulse {
+            animation: pulse-animation 1.5s infinite;
+        }
+        @keyframes pulse-animation {
+            0% { box-shadow: 0 0 0 0 rgba(66,133,244, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(66,133,244, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(66,133,244, 0); }
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script>
+        let map;
+        let userMarker;
+        let trainerMarkers = {};
+        let directionsService;
+        let directionsRenderer;
+        let userPosition = null;
+
+        // Função para inicializar o mapa
+        function initMap() {
+            // Defina os ícones DENTRO do initMap!
+            const caretakerIcon = {
+                url: 'https://cdn-icons-png.flaticon.com/512/2922/2922510.png',
+                scaledSize: new google.maps.Size(40, 40)
+            };
+            const ownerIcon = {
+                url: 'https://cdn-icons-png.flaticon.com/512/1077/1077012.png',
+                scaledSize: new google.maps.Size(32, 32)
+            };
+            // (Opcional) Ícone de pet
+            const petIcon = {
+                url: 'https://cdn-icons-png.flaticon.com/512/616/616408.png',
+                scaledSize: new google.maps.Size(28, 28)
+            };
+
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: { lat: -15.8323, lng: -48.0558 },
+                zoom: 15
+            });
+
+            directionsService = new google.maps.DirectionsService();
+            directionsRenderer = new google.maps.DirectionsRenderer({
+                map: map,
+                suppressMarkers: true
+            });
+
+            // Obter localização do usuário
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        userPosition = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+
+                        // Adicionar marcador do usuário (dono)
+                        userMarker = new google.maps.Marker({
+                            position: userPosition,
+                            map: map,
+                            title: 'Sua localização',
+                            icon: ownerIcon
+                        });
+                        // Tooltip
+                        const infoWindow = new google.maps.InfoWindow({
+                            content: '<b>Você (Dono)</b>'
+                        });
+                        userMarker.addListener('mouseover', () => infoWindow.open(map, userMarker));
+                        userMarker.addListener('mouseout', () => infoWindow.close());
+
+                        map.setCenter(userPosition);
+                    },
+                    (error) => {
+                        console.error('Erro ao obter localização:', error);
+                    }
+                );
+            }
+
+            // Carregar treinadores
+            loadTrainers(caretakerIcon);
+        }
+
+        // Função para carregar treinadores
+        async function loadTrainers(caretakerIcon) {
+            try {
+                const response = await fetch('/geolocation/trainers/all');
+                const trainers = await response.json();
+                console.log('Trainers recebidos:', trainers);
+
+                trainers.forEach(trainer => {
+                    // Posição inicial do backend
+                    const initialPosition = { lat: trainer.latitude, lng: trainer.longitude };
+                    const marker = new google.maps.Marker({
+                        position: initialPosition,
+                        map: map,
+                        title: trainer.name,
+                        icon: caretakerIcon
+                    });
+
+                    // Criar conteúdo do popup
+                    const content = `
+                        <div class=\"trainer-card\">\n                            <h3>${trainer.name}</h3>\n                            <p>Localização: ${trainer.latitude.toFixed(4)}, ${trainer.longitude.toFixed(4)}</p>\n                            <p>Passeios realizados: ${Math.floor(Math.random() * 100)}</p>\n                            <p>Avaliação média: ${(Math.random() * 5).toFixed(1)} ⭐</p>\n                            <button onclick=\"viewProfile('${trainer.id}')\">Ver Perfil</button>\n                            <button onclick=\"traceRoute('${trainer.id}')\">Traçar Rota</button>\n                            <button onclick=\"clearRoute()\">Limpar Rota</button>\n                        </div>\n                    `;
+
+                    // Tooltip
+                    const infoWindow = new google.maps.InfoWindow({
+                        content: `<b>${trainer.name}</b><br>Status: Disponível`
+                    });
+                    marker.addListener('mouseover', () => infoWindow.open(map, marker));
+                    marker.addListener('mouseout', () => infoWindow.close());
+
+                    // Popup ao clicar
+                    const cardWindow = new google.maps.InfoWindow({ content });
+                    marker.addListener('click', () => {
+                        cardWindow.open(map, marker);
+                    });
+
+                    // Armazenar marcador e posição inicial independente
+                    trainerMarkers[trainer.id] = {
+                        marker,
+                        infoWindow,
+                        position: initialPosition // <- cada um começa em um ponto diferente
+                    };
+                });
+
+                // Iniciar movimento dos treinadores
+                startTrainerMovement();
+            } catch (error) {
+                console.error('Erro ao carregar treinadores:', error);
+            }
+        }
+
+        // Função para mover treinadores
+        function startTrainerMovement() {
+            const center = { lat: -15.8367, lng: -48.0277 }; // Centro de Águas Claras
+            const radius = 0.008; // Raio para cobrir a cidade
+            const directionsService = new google.maps.DirectionsService();
+
+            Object.values(trainerMarkers).forEach(trainer => {
+                setNewRoute(trainer, true); // true para forçar destino inicial ao redor do centro
+                trainer.moveInterval = setInterval(() => {
+                    animateTrainerOnRoute(trainer);
+                }, 300); // Bem mais devagar
+            });
+
+            function setNewRoute(trainer, forceCenter = false) {
+                let base = forceCenter ? center : trainer.position;
+                let newLat, newLng;
+                let tries = 0;
+                do {
+                    newLat = center.lat + (Math.random() - 0.5) * 2 * radius;
+                    newLng = center.lng + (Math.random() - 0.5) * 2 * radius;
+                    tries++;
+                } while (distance(center.lat, center.lng, newLat, newLng) > radius && tries < 10);
+                const destination = { lat: newLat, lng: newLng };
+
+                directionsService.route({
+                    origin: trainer.position,
+                    destination: destination,
+                    travelMode: google.maps.TravelMode.DRIVING
+                }, (result, status) => {
+                    if (status === 'OK') {
+                        // Extrai todos os steps da rota
+                        const steps = [];
+                        result.routes[0].legs[0].steps.forEach(step => {
+                            step.path.forEach(latlng => {
+                                steps.push({ lat: latlng.lat(), lng: latlng.lng() });
+                            });
+                        });
+                        trainer.routeSteps = steps;
+                        trainer.routeIndex = 0;
+                        trainer.waitTime = 10 + Math.random() * 30;
+                        trainer.waitCounter = 0;
+                    } else {
+                        // Se falhar, tenta novamente
+                        setTimeout(() => setNewRoute(trainer), 1000);
+                    }
+                });
+            }
+
+            function animateTrainerOnRoute(trainer) {
+                if (!trainer.routeSteps || trainer.routeSteps.length === 0) return;
+                if (trainer.routeIndex >= trainer.routeSteps.length) {
+                    trainer.waitCounter++;
+                    if (trainer.waitCounter >= trainer.waitTime) {
+                        setNewRoute(trainer);
+                    }
+                    return;
+                }
+                // Move para o próximo ponto da rota
+                trainer.position = trainer.routeSteps[trainer.routeIndex];
+                trainer.marker.setPosition(trainer.position);
+                trainer.routeIndex++;
+            }
+
+            function distance(lat1, lng1, lat2, lng2) {
+                return Math.sqrt((lat1 - lat2) ** 2 + (lng1 - lng2) ** 2);
+            }
+        }
+
+        // Função para traçar rota
+        function traceRoute(trainerId) {
+            if (!userPosition) {
+                alert('Não foi possível obter sua localização');
+                return;
+            }
+
+            const trainer = trainerMarkers[trainerId];
+            if (!trainer) return;
+
+            const request = {
+                origin: userPosition,
+                destination: trainer.position,
+                travelMode: google.maps.TravelMode.DRIVING
+            };
+
+            directionsService.route(request, (result, status) => {
+                if (status === 'OK') {
+                    directionsRenderer.setDirections(result);
+                } else {
+                    alert('Erro ao traçar rota: ' + status);
+                }
+            });
+        }
+
+        // Função para limpar rota
+        function clearRoute() {
+            directionsRenderer.setDirections({ routes: [] });
+        }
+
+        // Função para ver perfil
+        function viewProfile(trainerId) {
+            // Mostra o modal
+            document.getElementById('profileModal').style.display = 'flex';
+            // Limpa conteúdo
+            document.getElementById('profileContent').innerHTML = '<span style="color:#888;">Carregando...</span>';
+            // Busca dados do cuidador
+            fetch(`/caretakers/${trainerId}`)
+                .then(res => res.json())
+                .then(caretaker => {
+                    document.getElementById('profileContent').innerHTML = `
+                        <img src='https://cdn-icons-png.flaticon.com/512/2922/2922510.png' width='80' style='margin-bottom:16px;border-radius:50%;box-shadow:0 2px 8px #0001;'>
+                        <h2 style='margin:0 0 12px 0;'>${caretaker.name}</h2>
+                        <div style='width:100%;text-align:left;'>
+                          <div style='margin-bottom:10px;'><b>Email:</b> ${caretaker.email}</div>
+                          <div style='margin-bottom:10px;'><b>Telefone:</b> ${caretaker.phone}</div>
+                          <div style='margin-bottom:10px;'><b>Especialização:</b> ${caretaker.specialization}</div>
+                          <div style='margin-bottom:10px;'><b>Certificações:</b> ${caretaker.certifications}</div>
+                          <div style='margin-bottom:10px;'><b>Disponível:</b> ${caretaker.isAvailable ? 'Sim' : 'Não'}</div>
+                        </div>
+                    `;
+                });
+        }
+        function closeProfileModal() {
+            document.getElementById('profileModal').style.display = 'none';
+        }
+    </script>
+
+    <!-- Modal de Perfil do Cuidador -->
+    <div id="profileModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+      <div id="profileCard" style="background:#fff; border-radius:12px; max-width:400px; margin:auto; padding:32px 24px; box-shadow:0 4px 32px #0002; position:relative;">
+        <button onclick="closeProfileModal()" style="position:absolute; top:12px; right:12px; background:none; border:none; font-size:22px; cursor:pointer;">&times;</button>
+        <div id="profileContent" style="min-height:200px; display:flex; flex-direction:column; align-items:center;"></div>
+      </div>
+    </div>
+
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=<%= googleMapsApiKey %>&callback=initMap">
+    </script>
+</body>
+</html> 

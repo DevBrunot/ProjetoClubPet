@@ -99,7 +99,106 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
 
 # ClubPet API
 
-Sistema de gerenciamento para pets, seus donos e cuidadores.
+---
+
+## 🗺️ Destaques do Mapa Interativo
+
+- **Cuidadores em Águas Claras:** O mapa mostra cuidadores andando de forma realista pelas ruas da cidade, com ícones personalizados.
+- **Movimento realista:** Cada cuidador segue rotas reais de ruas, de forma independente e devagar, usando a Directions API do Google Maps.
+- **Popup e Modal de Perfil:** Ao clicar em um cuidador, aparece um popup com informações e botão "Ver Perfil". O perfil abre em um modal estilizado, sem redirecionar de página.
+- **Backend integrado:** Os cuidadores vêm do banco de dados MariaDB, e o frontend é totalmente integrado.
+- **Personalização fácil:** Região, raio, velocidade e ícones podem ser ajustados facilmente no código.
+
+---
+
+## 🚀 Funcionalidades
+
+- **Mapa principal**: Mostra todos os cuidadores disponíveis em Águas Claras, com ícones personalizados e movimento realista pelas ruas (usando Google Maps Directions API).
+- **Movimento realista**: Cuidadores se movimentam de forma independente e devagar, sempre pelas ruas da cidade.
+- **Popup do cuidador**: Ao clicar em um cuidador, aparece um popup com informações e botão "Ver Perfil".
+- **Modal de perfil estilizado**: Ao clicar em "Ver Perfil", abre um modal bonito e centralizado com os dados do cuidador, sem redirecionar de página.
+- **Backend integrado**: Cuidadores são buscados do banco de dados MariaDB.
+- **Frontend moderno**: Interface responsiva, modal customizado, experiência fluida.
+
+## 🗺️ Demonstração
+- Acesse: `http://localhost:3000/geolocation/mapa`
+- Veja cuidadores andando pelas ruas de Águas Claras.
+- Clique em um cuidador para ver detalhes e abrir o modal de perfil.
+
+## 📋 Requisitos
+- Node.js (v14 ou superior)
+- Docker e Docker Compose
+- Google Maps API Key (ativar Directions API)
+
+## 🔧 Instalação
+
+1. **Clone o repositório**
+```bash
+git clone [url-do-repositorio]
+cd clubpet
+```
+
+2. **Instale as dependências**
+```bash
+npm install
+```
+
+3. **Configure o arquivo .env**
+```env
+DB_HOST=localhost
+DB_PORT=3306
+DB_USERNAME=clubpet_user
+DB_PASSWORD=clubpet_password
+DB_DATABASE=clubpet_db
+API_VERSION=1.0.0
+PORT=3000
+NODE_ENV=development
+GOOGLE_MAPS_API_KEY=sua_chave_google_aqui
+```
+
+4. **Inicie o banco de dados com Docker**
+```bash
+docker-compose up -d
+```
+
+5. **Inicie a aplicação**
+```bash
+npm run start:dev
+```
+
+6. **Acesse o sistema**
+- Mapa: [http://localhost:3000/geolocation/mapa](http://localhost:3000/geolocation/mapa)
+
+## 👤 Cadastro de Cuidadores
+- Os cuidadores podem ser cadastrados via API ou diretamente no banco.
+- Exemplo de cadastro via banco:
+```bash
+docker exec -it clubpet_db mariadb -uclubpet_user -pclubpet_password clubpet_db -e "INSERT INTO caretaker (name, email, password, phone, specialization, certifications, isAvailable) VALUES ('João Silva', 'joao@email.com', 'senha123', '61999999999', 'Adestramento', 'Certificado em Comportamento Canino', true);"
+```
+
+## 🗺️ Funcionalidades do Mapa
+- **Cuidadores**: Ícones de pessoa, andando pelas ruas de Águas Claras.
+- **Popup**: Mostra nome, localização, passeios, avaliação e botão "Ver Perfil".
+- **Modal de Perfil**: Exibe informações detalhadas do cuidador, estilizado, sem redirecionar.
+- **Movimento**: Cuidadores seguem rotas reais de ruas, com velocidade ajustável.
+
+## 💡 Personalização
+- Para mudar a região, altere as coordenadas e raio no JS do mapa.
+- Para mudar o ícone dos cuidadores, altere a URL do ícone no JS.
+- Para ajustar velocidade, altere o intervalo do setInterval.
+
+## 📦 Estrutura do Projeto
+- `src/geolocation/geolocation.service.ts`: lógica de cuidadores e posições
+- `views/geolocation.ejs`: mapa, popups, modal de perfil, JS do frontend
+- `src/modules/caretakers/caretakers.controller.ts`: API de cuidadores
+
+## 📝 Observações
+- O sistema pode ser expandido para incluir chat, solicitações de serviço, avaliações, etc.
+- O modal de perfil está pronto para receber mais funcionalidades.
+
+---
+
+Se precisar de mais instruções ou quiser expandir o sistema, é só pedir!
 
 ## 🚀 Tecnologias
 

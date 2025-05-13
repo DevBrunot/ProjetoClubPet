@@ -13,6 +13,7 @@ import { PetsModule } from './modules/pets/pets.module';
 import { CaretakersModule } from './modules/caretakers/caretakers.module';
 import { PaymentModule } from './modules/payments/payment.module';
 import { ChatModule } from './modules/chat/chat.module';
+import { GeolocationModule } from './geolocation/geolocation.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { ChatModule } from './modules/chat/chat.module';
     CaretakersModule,
     PaymentModule,
     ChatModule,
+    GeolocationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
