@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { PetOwner } from './pet-owner.entity';
 import { Caretaker } from './caretaker.entity';
 
@@ -19,21 +19,27 @@ export class Pet {
   @Column()
   age: number;
 
-  @Column()
+  @Column('decimal', { precision: 5, scale: 2 })
   weight: number;
+
+  @Column({ nullable: true })
+  gender: string;
 
   @Column({ type: 'text', nullable: true })
   medicalHistory: string;
 
-  @ManyToOne(() => PetOwner, owner => owner.pets)
+  @Column({ type: 'text', nullable: true })
+  observations: string;
+
+  @ManyToOne(() => PetOwner, petOwner => petOwner.pets)
   owner: PetOwner;
 
   @ManyToOne(() => Caretaker, caretaker => caretaker.pets)
   caretaker: Caretaker;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn()
   createdAt: Date;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
+  @UpdateDateColumn()
   updatedAt: Date;
 } 
