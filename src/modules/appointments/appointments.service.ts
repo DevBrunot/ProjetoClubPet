@@ -29,13 +29,13 @@ export class AppointmentsService {
       throw new NotFoundException(`Dono de pet com ID ${petOwnerId} não encontrado`);
     }
 
-    // Verificar se o cuidador existe
+   
     const caretaker = await this.caretakerRepository.findOneBy({ id: caretakerId });
     if (!caretaker) {
       throw new NotFoundException(`Cuidador com ID ${caretakerId} não encontrado`);
     }
 
-    // Verificar se o pet existe (se for fornecido)
+   
     let pet: Pet | null = null;
     if (petId) {
       pet = await this.petRepository.findOneBy({ id: petId });

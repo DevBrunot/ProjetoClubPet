@@ -293,7 +293,12 @@ O sistema possui três entidades principais:
   "email": "joao@email.com",
   "password": "senha123",
   "phone": "61999999999",
-  "address": "Rua 1, Número 123"
+  "logradouro": "Rua das Flores",
+  "numero": "123",
+  "bairro": "Centro",
+  "cidade": "Brasília",
+  "estado": "DF",
+  "cep": "70000-000"
 }
 ```
 
@@ -317,7 +322,12 @@ O sistema possui três entidades principais:
   "name": "João Silva Atualizado",
   "email": "joao@email.com",
   "phone": "61999999999",
-  "address": "Rua 2, Número 456"
+  "logradouro": "Avenida Principal",
+  "numero": "456",
+  "bairro": "Asa Sul",
+  "cidade": "Brasília",
+  "estado": "DF",
+  "cep": "70000-001"
 }
 ```
 
@@ -340,11 +350,24 @@ O sistema possui três entidades principais:
   "breed": "Labrador",
   "age": 3,
   "weight": 25.5,
+  "gender": "macho",
   "medicalHistory": "Vacinado em 01/2024",
+  "observations": "Alérgico a ração com milho, prefere ração premium",
   "owner": { "id": 1 },
   "caretaker": { "id": 1 }
 }
 ```
+
+> **Nota sobre o campo gender:**
+> O campo `gender` é opcional e aceita qualquer string. Exemplos de valores possíveis:
+> - "macho"
+> - "fêmea"
+> - "não informado"
+> - "castrado"
+> - "não castrado"
+> - "neutro"
+> - "esterilizado"
+> - "não esterilizado"
 
 #### 2. Listar Todos os Pets
 
@@ -375,7 +398,9 @@ O sistema possui três entidades principais:
 {
   "name": "Rex",
   "weight": 26.2,
-  "medicalHistory": "Vacinado em 01/2024, vermifugado em 02/2024"
+  "gender": "macho castrado",
+  "medicalHistory": "Vacinado em 01/2024, vermifugado em 02/2024",
+  "observations": "Alérgico a ração com milho, prefere ração premium. Gosta de brincar com bolinhas."
 }
 ```
 
@@ -397,8 +422,15 @@ O sistema possui três entidades principais:
   "email": "maria@email.com",
   "password": "senha123",
   "phone": "61988888888",
+  "logradouro": "Rua dos Cuidadores",
+  "numero": "789",
+  "bairro": "Asa Norte",
+  "cidade": "Brasília",
+  "estado": "DF",
+  "cep": "70000-002",
   "specialization": "Veterinária",
   "certifications": "CRMV-DF 1234",
+  "description": "Veterinária especializada em cães e gatos, com 5 anos de experiência em clínica veterinária e atendimento domiciliar.",
   "isAvailable": true
 }
 ```
@@ -427,7 +459,14 @@ O sistema possui três entidades principais:
 {
   "name": "Maria Silva",
   "phone": "61988888888",
-  "specialization": "Veterinária e Grooming"
+  "logradouro": "Avenida dos Veterinários",
+  "numero": "101",
+  "bairro": "Lago Sul",
+  "cidade": "Brasília",
+  "estado": "DF",
+  "cep": "70000-003",
+  "specialization": "Veterinária e Grooming",
+  "description": "Veterinária especializada em cães e gatos, com 5 anos de experiência em clínica veterinária e atendimento domiciliar. Também ofereço serviços de grooming para cães de pequeno e médio porte."
 }
 ```
 

@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Pet } from './pet.entity';
 
 @Entity()
@@ -19,10 +19,31 @@ export class Caretaker {
   phone: string;
 
   @Column()
+  logradouro: string;
+
+  @Column()
+  numero: string;
+
+  @Column()
+  bairro: string;
+
+  @Column()
+  cidade: string;
+
+  @Column()
+  estado: string;
+
+  @Column()
+  cep: string;
+
+  @Column()
   specialization: string;
 
   @Column({ type: 'text', nullable: true })
   certifications: string;
+
+  @Column({ type: 'text', nullable: true })
+  description: string;
 
   @Column({ type: 'boolean', default: true })
   isAvailable: boolean;
@@ -30,9 +51,9 @@ export class Caretaker {
   @OneToMany(() => Pet, pet => pet.caretaker)
   pets: Pet[];
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn()
   createdAt: Date;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
+  @UpdateDateColumn()
   updatedAt: Date;
 }
