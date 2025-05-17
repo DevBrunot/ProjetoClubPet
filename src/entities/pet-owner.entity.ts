@@ -13,6 +13,9 @@ export class PetOwner {
   @Column({ unique: true })
   email: string;
 
+   @Column()
+  aniversario: Date;
+
   @Column()
   password: string;
 

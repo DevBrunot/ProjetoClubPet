@@ -9,6 +9,9 @@ export class Caretaker {
   @Column()
   name: string;
 
+  @Column()
+  aniversario: Date;
+
   @Column({ unique: true })
   email: string;
 
