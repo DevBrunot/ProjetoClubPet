@@ -7,6 +7,9 @@ export class Pet {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ type: 'text', nullable: true })
+  imageUrl: string;
+
   @Column()
   name: string;
 

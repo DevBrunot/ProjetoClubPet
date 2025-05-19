@@ -14,9 +14,11 @@ import { CaretakersModule } from './modules/caretakers/caretakers.module';
 import { PaymentModule } from './modules/payments/payment.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { GeolocationModule } from './geolocation/geolocation.module';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
+    UploadModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),
