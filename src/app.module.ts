@@ -15,6 +15,8 @@ import { PaymentModule } from './modules/payments/payment.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { GeolocationModule } from './geolocation/geolocation.module';
 import { UploadModule } from './upload/upload.module';
+import { ServiceModule } from './service/service.module';
+import { Service } from './entities/service.entity';
 
 @Module({
   imports: [
@@ -33,7 +35,7 @@ import { UploadModule } from './upload/upload.module';
           username: configService.get('DB_USERNAME'),
           password: configService.get('DB_PASSWORD'),
           database: configService.get('DB_DATABASE'),
-          entities: [PetOwner, Pet, Caretaker, Payment, Message],
+          entities: [PetOwner, Pet, Caretaker, Payment, Message, Service],
           synchronize: configService.get('NODE_ENV') === 'development',
           logging: configService.get('NODE_ENV') === 'development',
           autoLoadEntities: true,
@@ -52,6 +54,7 @@ import { UploadModule } from './upload/upload.module';
     PaymentModule,
     ChatModule,
     GeolocationModule,
+    ServiceModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -40,6 +40,9 @@ export class Pet {
   @ManyToOne(() => Caretaker, caretaker => caretaker.pets)
   caretaker: Caretaker;
 
+  @Column({ type: 'boolean', default: false })
+  isAvailable: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 
