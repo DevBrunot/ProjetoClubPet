@@ -49,6 +49,9 @@ export class Service {
   @CreateDateColumn()
   createdAt: Date;
 
+  @Column({ type: 'date' })
+  serviceDate: Date;
+
   @Column({ default: false })
   isCompleted: boolean;
 

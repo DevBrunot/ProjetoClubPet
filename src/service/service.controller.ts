@@ -26,4 +26,9 @@ export class ServiceController {
     const isCompleted = completed === 'true';
     return this.serviceService.findByCompletion(isCompleted);
   }
+
+  @Get('unavailable-dates/:caretakerId')
+  async getUnavailableDates(@Param('caretakerId') caretakerId: number): Promise<string[]> {
+    return this.serviceService.getUnavailableDates(caretakerId);
+  }
 }

@@ -8,79 +8,112 @@ import { CreateServiceDto } from './dto/create-service.dto';
 
 @Injectable()
 export class ServiceService {
-  constructor(
-    @InjectRepository(Service)
-    private serviceRepo: Repository<Service>,
-    @InjectRepository(Caretaker)
-    private caretakerRepo: Repository<Caretaker>,
-    @InjectRepository(Pet)
-    private petRepo: Repository<Pet>,
-  ) {}
+    constructor(
+        @InjectRepository(Service)
+        private serviceRepo: Repository<Service>,
+        @InjectRepository(Caretaker)
+        private caretakerRepo: Repository<Caretaker>,
+        @InjectRepository(Pet)
+        private petRepo: Repository<Pet>,
+    ) { }
 
-  async create(dto: CreateServiceDto): Promise<Service> {
-    const caretaker = await this.caretakerRepo.findOne({ where: { id: dto.caretakerId } });
-    if (!caretaker) throw new NotFoundException('Cuidador não encontrado');
+    private parseToBrasiliaDate(input: string): Date {
+        // Interpreta como data local (sem UTC)
+        const [year, month, day] = input.split('-').map(Number);
+        const localDate = new Date(year, month - 1, day);
 
-    const pet = await this.petRepo.findOne({ where: { id: dto.petId } });
-    if (!pet) throw new NotFoundException('Pet não encontrado');
+        // Ajusta para manter a hora como meio-dia local (seguro contra offset negativo)
+        localDate.setHours(12, 0, 0, 0);
 
-    caretaker.isAvailable = false;
-    pet.isAvailable = false;
+        return localDate;
+    }
 
-    await this.caretakerRepo.save(caretaker);
-    await this.petRepo.save(pet);
+    async create(dto: CreateServiceDto): Promise<Service> {
+        const caretaker = await this.caretakerRepo.findOne({ where: { id: dto.caretakerId } });
+        if (!caretaker) throw new NotFoundException('Cuidador não encontrado');
 
-    const service = this.serviceRepo.create({
-      caretaker,
-      pet,
-      caretakerName: caretaker.name,
-      caretakerImageUrl: caretaker.imageUrl,
-      caretakerPhone: caretaker.phone,
-      caretakerSpecialization: caretaker.specialization,
-      caretakerLogradouro: caretaker.logradouro,
-      petName: pet.name,
-      petImageUrl: pet.imageUrl,
-      petBreed: pet.breed,
-      petAge: pet.age,
-      petWeight: pet.weight,
-      petGender: pet.gender,
-    });
+        const pet = await this.petRepo.findOne({ where: { id: dto.petId } });
+        if (!pet) throw new NotFoundException('Pet não encontrado');
 
-    return this.serviceRepo.save(service);
-  }
+        caretaker.isAvailable = false;
+        pet.isAvailable = false;
 
-  async endService(id: number): Promise<Service> {
-    const service = await this.serviceRepo.findOne({
-      where: { id },
-      relations: ['pet', 'caretaker'],
-    });
+        await this.caretakerRepo.save(caretaker);
+        await this.petRepo.save(pet);
 
-    if (!service) throw new NotFoundException('Serviço não encontrado');
+        const service = this.serviceRepo.create({
+            caretaker,
+            pet,
+            caretakerName: caretaker.name,
+            caretakerImageUrl: caretaker.imageUrl,
+            caretakerPhone: caretaker.phone,
+            caretakerSpecialization: caretaker.specialization,
+            caretakerLogradouro: caretaker.logradouro,
+            petName: pet.name,
+            petImageUrl: pet.imageUrl,
+            petBreed: pet.breed,
+            petAge: pet.age,
+            petWeight: pet.weight,
+            petGender: pet.gender,
+            serviceDate: this.parseToBrasiliaDate(dto.serviceDate),
+        });
 
-    service.isCompleted = true;
-    service.endedAt = new Date();
+        return this.serviceRepo.save(service);
+    }
 
-    service.pet.isAvailable = true;
-    service.caretaker.isAvailable = true;
+    async endService(id: number): Promise<Service> {
+        const service = await this.serviceRepo.findOne({
+            where: { id },
+            relations: ['pet', 'caretaker'],
+        });
 
-    await this.petRepo.save(service.pet);
-    await this.caretakerRepo.save(service.caretaker);
+        if (!service) throw new NotFoundException('Serviço não encontrado');
 
-    return this.serviceRepo.save(service);
-  }
+        service.isCompleted = true;
+        service.endedAt = new Date();
 
-  async findAll(): Promise<Service[]> {
-    return this.serviceRepo.find({
-      relations: ['caretaker', 'pet'],
-      order: { createdAt: 'DESC' },
-    });
-  }
+        service.pet.isAvailable = true;
+        service.caretaker.isAvailable = true;
 
-  async findByCompletion(isCompleted: boolean): Promise<Service[]> {
-    return this.serviceRepo.find({
-      where: { isCompleted },
-      relations: ['caretaker', 'pet'],
-      order: { endedAt: 'DESC' },
-    });
-  }
+        await this.petRepo.save(service.pet);
+        await this.caretakerRepo.save(service.caretaker);
+
+        return this.serviceRepo.save(service);
+    }
+
+    async findAll(): Promise<Service[]> {
+        return this.serviceRepo.find({
+            relations: ['caretaker', 'pet'],
+            order: { createdAt: 'DESC' },
+        });
+    }
+
+    async findByCompletion(isCompleted: boolean): Promise<Service[]> {
+        return this.serviceRepo.find({
+            where: { isCompleted },
+            relations: ['caretaker', 'pet'],
+            order: { endedAt: 'DESC' },
+        });
+    }
+
+    async getUnavailableDates(caretakerId: number): Promise<string[]> {
+        const services = await this.serviceRepo.find({
+            where: {
+                caretaker: { id: caretakerId },
+                isCompleted: false,
+            },
+        });
+
+        return services
+            .filter(service => service.serviceDate)
+            .map(service => {
+                const date = new Date(service.serviceDate);
+                return date.toLocaleDateString('pt-BR', {
+                    timeZone: 'America/Sao_Paulo',
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                }).replace(/\//g, '-');
+            });
+    }
 }
