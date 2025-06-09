@@ -18,6 +18,9 @@ export class Caretaker {
   @Column({ unique: true })
   email: string;
 
+  @Column("decimal", { precision: 10, scale: 2 })
+  valor: string;
+  
   @Column()
   password: string;
 

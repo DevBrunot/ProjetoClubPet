@@ -5,6 +5,7 @@ import { Service } from 'src/entities/service.entity';
 import { Caretaker } from 'src/entities/caretaker.entity';
 import { Pet } from 'src/entities/pet.entity';
 import { CreateServiceDto } from './dto/create-service.dto';
+import { EndMultipleServicesDto } from './dto/end-multiple-services.dto';
 
 @Injectable()
 export class ServiceService {
@@ -55,7 +56,7 @@ export class ServiceService {
             petAge: pet.age,
             petWeight: pet.weight,
             petGender: pet.gender,
-            serviceDate: this.parseToBrasiliaDate(dto.serviceDate),
+            serviceDate: new Date(dto.serviceDate),
         });
 
         return this.serviceRepo.save(service);
@@ -106,14 +107,30 @@ export class ServiceService {
 
         return services
             .filter(service => service.serviceDate)
-            .map(service => {
-                const date = new Date(service.serviceDate);
-                return date.toLocaleDateString('pt-BR', {
-                    timeZone: 'America/Sao_Paulo',
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                }).replace(/\//g, '-');
+            .map(service => new Date(service.serviceDate).toISOString());
+    }
+
+    async endMultipleServices(dto: EndMultipleServicesDto): Promise<Service[]> {
+        const updatedServices: Service[] = [];
+
+        for (const id of dto.serviceIds) {
+            const service = await this.serviceRepo.findOne({
+                where: { id },
+                relations: ['pet', 'caretaker'],
             });
+
+            if (!service || service.isCompleted) continue;
+
+            service.isCompleted = true;
+            service.endedAt = new Date();
+            service.pet.isAvailable = true;
+            service.caretaker.isAvailable = true;
+
+            await this.petRepo.save(service.pet);
+            await this.caretakerRepo.save(service.caretaker);
+            updatedServices.push(await this.serviceRepo.save(service));
+        }
+
+        return updatedServices;
     }
 }

@@ -14,6 +14,9 @@ export class Service {
   pet: Pet;
 
   @Column()
+  caretakerId: number;
+
+  @Column()
   caretakerName: string;
 
   @Column({ nullable: true, type: 'text' })
@@ -27,6 +30,9 @@ export class Service {
 
   @Column()
   caretakerLogradouro: string;
+
+  @Column()
+  petId: number;
 
   @Column()
   petName: string;
@@ -49,7 +55,7 @@ export class Service {
   @CreateDateColumn()
   createdAt: Date;
 
-  @Column({ type: 'date' })
+  @Column({ type: 'timestamp' })
   serviceDate: Date;
 
   @Column({ default: false })
