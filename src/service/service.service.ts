@@ -93,7 +93,7 @@ export class ServiceService {
         return this.serviceRepo.find({
             where: { isCompleted },
             relations: ['caretaker', 'pet'],
-            order: { endedAt: 'DESC' },
+            order: isCompleted ? { createdAt: 'DESC' } : { serviceDate: 'ASC' },
         });
     }
 
