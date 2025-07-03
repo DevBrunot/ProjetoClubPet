@@ -6,6 +6,8 @@ import { Payment } from '../../entities/payment.entity';
 import { Pet } from '../../entities/pet.entity';
 import { PetOwner } from '../../entities/pet-owner.entity';
 import { Caretaker } from '../../entities/caretaker.entity';
+import { CreatePaymentDto } from './dto/create-payment.dto';
+import { NotFoundException } from '@nestjs/common';
 import Stripe from 'stripe';
 
 @Injectable()
@@ -31,9 +33,9 @@ export class PaymentService {
   }
 
   async createPayment(
-    petId: number, 
-    ownerId: number, 
-    amount: number, 
+    petId: number,
+    ownerId: number,
+    amount: number,
     description: string,
     caretakerId?: number
   ): Promise<Payment> {
@@ -105,11 +107,11 @@ export class PaymentService {
       where: { id },
       relations: ['pet', 'owner', 'caretaker'],
     });
-    
+
     if (!payment) {
       throw new BadRequestException(`Pagamento com ID ${id} não encontrado`);
     }
-    
+
     return payment;
   }
 
@@ -129,5 +131,61 @@ export class PaymentService {
     }
 
     return await this.paymentRepository.save(payment);
+  }
+
+
+  async createCheckoutSession(createPaymentDto: CreatePaymentDto) {
+    const { userId, caretakerId, amount } = createPaymentDto;
+
+    const caretaker = await this.caretakerRepository.findOne({
+      where: { id: caretakerId },
+    });
+
+    if (!caretaker) {
+      throw new NotFoundException('Cuidador não encontrado');
+    }
+
+    const session = await this.stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price_data: {
+            currency: 'brl',
+            product_data: {
+              name: `Serviço de ${caretaker.name}`,
+            },
+            unit_amount: Math.round(amount * 100), // em centavos
+          },
+          quantity: 1,
+        },
+      ],
+      mode: 'payment',
+      success_url: 'http://localhost:8080/p/PagamentoConfirmado',
+      cancel_url: 'http://localhost:8080/p/Servicos',
+      metadata: {
+        userId: userId.toString(),
+        caretakerId: caretakerId.toString(),
+      },
+    });
+
+    if (!session.url) {
+      throw new BadRequestException('URL de checkout não gerada pelo Stripe');
+    }
+
+    return {
+      sessionId: session.id,
+      checkoutUrl: session.url
+    };
+  }
+
+  async verifyCheckoutSession(sessionId: string): Promise<'paid' | 'unpaid' | 'not_found'> {
+    try {
+      const session = await this.stripe.checkout.sessions.retrieve(sessionId);
+      if (!session) return 'not_found';
+      if (session.payment_status === 'paid') return 'paid';
+      return 'unpaid';
+    } catch (error) {
+      return 'not_found';
+    }
   }
 }
